@@ -42,3 +42,40 @@ def handle_file_transmission(filename, client_addr, client_port):
                     
                 message = data.decode().strip()
                 tokens = message.split()
+
+                # Validate message format
+                if len(tokens) < 3 or tokens[0] != "FILE" or tokens[1] != filename:
+                    continue
+                    
+                # Handle CLOSE request
+                if tokens[2] == "CLOSE":
+                    data_sock.sendto(f"FILE {filename} CLOSE_OK".encode(), addr)
+                    break
+                    
+                # Handle data request
+                if tokens[2] == "GET" and tokens[3] == "START" and tokens[5] == "END":
+                    try:
+                        start = int(tokens[4])
+                        end = int(tokens[6])
+                        block_size = end - start + 1
+                        
+                        # Read requested data block
+                        f.seek(start)
+                        file_data = f.read(block_size)
+                        
+                        # Base64 encode and send
+                        base64_data = base64.b64encode(file_data).decode()
+                        response = (
+                            f"FILE {filename} OK START {start} END {end} "
+                            f"DATA {base64_data}"
+                        )
+                        data_sock.sendto(response.encode(), addr)
+                    except Exception as e:
+                        print(f"Error processing request: {e}")
+        
+        print(f"Completed transfer of {filename} to {client_addr}")
+        
+    except Exception as e:
+        print(f"Transfer failed: {e}")
+    finally:
+        data_sock.close()
