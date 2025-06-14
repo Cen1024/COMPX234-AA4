@@ -79,3 +79,40 @@ def handle_file_transmission(filename, client_addr, client_port):
         print(f"Transfer failed: {e}")
     finally:
         data_sock.close()
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python UDPserver.py <port>")
+        return
+        
+    port = int(sys.argv[1])
+    
+    # Create main socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('', port))
+    print(f"Server listening on port {port}")
+    
+    while True:
+        try:
+            # Wait for download request
+            data, addr = sock.recvfrom(65536)
+            message = data.decode().strip()
+            tokens = message.split()
+            
+            # Validate DOWNLOAD request
+            if len(tokens) != 2 or tokens[0] != "DOWNLOAD":
+                continue
+                
+            filename = tokens[1]
+            client_addr, client_port = addr
+            
+            # Start new thread for file transfer
+            threading.Thread(
+                target=handle_file_transmission,
+                args=(filename, client_addr, client_port)
+            ).start()
+            
+        except Exception as e:
+            print(f"Error handling request: {e}")
+
+if __name__ == "__main__":
+    main()
