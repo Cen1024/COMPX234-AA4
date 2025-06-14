@@ -28,3 +28,23 @@ def send_and_receive(sock, message, address, port, max_retries=5, initial_timeou
             sock.settimeout(original_timeout)  # Restore original timeout
     
     raise Exception("Max retries exceeded, giving up")
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python UDPclient.py <hostname> <port> <filelist>")
+        return
+    
+    hostname = sys.argv[1]
+    server_port = int(sys.argv[2])
+    filelist_name = sys.argv[3]
+    
+    # Read list of files to download
+    try:
+        with open(filelist_name, 'r') as f:
+            files = [line.strip() for line in f.readlines() if line.strip()]
+    except Exception as e:
+        print(f"Error reading file list: {e}")
+        return
+    
+    # Create UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
