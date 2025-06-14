@@ -48,3 +48,31 @@ def main():
     
     # Create UDP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    for filename in files:
+        print(f"Requesting: {filename}")
+        try:
+            # Send DOWNLOAD request
+            response = send_and_receive(
+                sock, 
+                f"DOWNLOAD {filename}", 
+                hostname, 
+                server_port
+            )
+            
+            # Handle server response
+            if response.startswith("ERR"):
+                print(f"Server error: {response}")
+                continue
+                
+            # Parse OK response
+            parts = response.split()
+            if parts[0] != "OK" or parts[1] != filename:
+                print(f"Invalid response: {response}")
+                continue
+                
+            # Extract file size and data port
+            file_size = int(parts[3])  # SIZE value
+            data_port = int(parts[5])  # PORT value
+            print(f"Downloading {filename} ({file_size} bytes)")
+            
