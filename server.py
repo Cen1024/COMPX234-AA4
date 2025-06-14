@@ -23,3 +23,22 @@ def handle_file_transmission(filename, client_addr, client_port):
                 break
             except:
                 continue  # Try another port if binding fails
+            # Send OK response with port information
+        response = f"OK {filename} SIZE {file_size} PORT {port}"
+        data_sock.sendto(response.encode(), (client_addr, client_port))
+        
+        print(f"Serving {filename} to {client_addr}:{client_port} on port {port}")
+        
+        # Open file for reading
+        with open(filename, 'rb') as f:
+            while True:
+                # Wait for client request
+                data_sock.settimeout(5.0)  # Set timeout for client response
+                try:
+                    data, addr = data_sock.recvfrom(65536)
+                except socket.timeout:
+                    print("Client timed out, closing connection")
+                    break
+                    
+                message = data.decode().strip()
+                tokens = message.split()
